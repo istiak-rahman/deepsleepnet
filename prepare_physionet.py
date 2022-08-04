@@ -4,18 +4,14 @@ import math
 import ntpath
 import os
 import shutil
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
 
 from datetime import datetime
 
 import numpy as np
 
-from mne import Epochs, pick_types, find_events
-from mne.io import concatenate_raws, read_raw_edf
+from mne.io import read_raw_edf
 
-import dhedfreader
-
+from deepsleep import dhedfreader
 
 # Label values
 W = 0
@@ -91,7 +87,7 @@ def main():
 
         raw = read_raw_edf(psg_fnames[i], preload=True, stim_channel=None)
         sampling_rate = raw.info['sfreq']
-        raw_ch_df = raw.to_data_frame(scaling_time=100.0)[select_ch]
+        raw_ch_df = raw.to_data_frame(scalings=100.0)[select_ch]
         raw_ch_df = raw_ch_df.to_frame()
         raw_ch_df.set_index(np.arange(len(raw_ch_df)))
 
