@@ -24,14 +24,13 @@ from deepsleep.sleep_stage import (NUM_CLASSES,
                                    SAMPLING_RATE)
 from deepsleep.utils import iterate_batch_seq_minibatches
 
+FLAGS = tf.compat.v1.flags.FLAGS
 
-FLAGS = tf.app.flags.FLAGS
-
-tf.app.flags.DEFINE_string('data_dir', 'data',
+tf.compat.v1.flags.DEFINE_string('data_dir', 'data',
                            """Directory where to load training data.""")
-tf.app.flags.DEFINE_string('model_dir', 'output',
+tf.compat.v1.flags.DEFINE_string('model_dir', 'output',
                            """Directory where to load trained models.""")
-tf.app.flags.DEFINE_string('output_dir', 'output',
+tf.compat.v1.flags.DEFINE_string('output_dir', 'output',
                            """Directory where to save outputs.""")
 
 
@@ -127,7 +126,7 @@ def custom_rnn(cell, inputs, initial_state=None, dtype=None,
             `[batch_size, input_size]`, or a nested tuple of such elements.
         initial_state: (optional) An initial state for the RNN.
             If `cell.state_size` is an integer, this must be
-            a `Tensor` of appropriate type and shape `[batch_size, cell.state_size]`.
+            a `Tensor` of compat.v1ropriate type and shape `[batch_size, cell.state_size]`.
             If `cell.state_size` is a tuple, this should be a tuple of
             tensors having shapes `[batch_size, s] for s in cell.state_size`.
         dtype: (optional) The data type for the initial state and expected output.
@@ -168,8 +167,8 @@ def custom_rnn(cell, inputs, initial_state=None, dtype=None,
         while nest.is_sequence(first_input):
             first_input = first_input[0]
 
-        # Temporarily avoid EmbeddingWrapper and seq2seq badness
-        # TODO(lukaszkaiser): remove EmbeddingWrapper
+        # Temporarily avoid EmbeddingWrcompat.v1er and seq2seq badness
+        # TODO(lukaszkaiser): remove EmbeddingWrcompat.v1er
         if first_input.get_shape().ndims != 1:
 
             input_shape = first_input.get_shape().with_rank_at_least(2)
@@ -179,17 +178,17 @@ def custom_rnn(cell, inputs, initial_state=None, dtype=None,
             for flat_input in flat_inputs:
                 input_shape = flat_input.get_shape().with_rank_at_least(2)
                 batch_size, input_size = input_shape[0], input_shape[1:]
-                fixed_batch_size.merge_with(batch_size)
+                #fixed_batch_size.merge_with(batch_size)
                 for i, size in enumerate(input_size):
-                    if size.value is None:
+                    if size is None:
                         raise ValueError(
                             "Input size (dimension %d of inputs) must be accessible via "
                             "shape inference, but saw value None." % i)
         else:
             fixed_batch_size = first_input.get_shape().with_rank_at_least(1)[0]
 
-        if fixed_batch_size.value:
-            batch_size = fixed_batch_size.value
+        if fixed_batch_size:
+            batch_size = fixed_batch_size
         else:
             batch_size = array_ops.shape(first_input)[0]
         if initial_state is not None:
@@ -212,7 +211,7 @@ def custom_rnn(cell, inputs, initial_state=None, dtype=None,
                 output = array_ops.zeros(
                     array_ops.pack(size), _infer_state_dtype(dtype, state))
                 shape = _state_size_with_prefix(
-                    output_size, prefix=[fixed_batch_size.value])
+                    output_size, prefix=[fixed_batch_size])
                 output.set_shape(tensor_shape.TensorShape(shape))
                 return output
 
@@ -269,7 +268,7 @@ def custom_bidirectional_rnn(cell_fw, cell_bw, inputs,
         inputs: A length T list of inputs, each a tensor of shape
             [batch_size, input_size], or a nested tuple of such elements.
         initial_state_fw: (optional) An initial state for the forward RNN.
-            This must be a tensor of appropriate type and shape
+            This must be a tensor of compat.v1ropriate type and shape
             `[batch_size, cell_fw.state_size]`.
             If `cell_fw.state_size` is a tuple, this should be a tuple of
             tensors having shapes `[batch_size, s] for s in cell_fw.state_size`.
@@ -388,11 +387,11 @@ class CustomDeepSleepNet(DeepSleepNet):
         # Reshape the input from (batch_size * seq_length, input_dim) to
         # (batch_size, seq_length, input_dim)
         name = "l{}_reshape_seq".format(self.layer_idx)
-        input_dim = network.get_shape()[-1].value
+        input_dim = network.get_shape()[-1]
         seq_input = tf.reshape(network,
                                shape=[-1, self.seq_length, input_dim],
                                name=name)
-        assert self.batch_size == seq_input.get_shape()[0].value
+        assert self.batch_size == seq_input.get_shape()[0]
         self.activations.append((name, seq_input))
         self.layer_idx += 1
 
@@ -407,10 +406,10 @@ class CustomDeepSleepNet(DeepSleepNet):
                                                 state_is_tuple=True,
                                                 reuse=tf.compat.v1.get_variable_scope().reuse) 
                 if self.use_dropout_sequence:
-                    keep_prob = 0.5 if self.is_train else 1.0
+                    dropout = 0.5 if self.is_train else 1.0
                     cell = tf.compat.v1.nn.rnn_cell.DropoutWrapper(
                         cell,
-                        output_keep_prob=keep_prob
+                        output_keep_prob=dropout
                     )
 
                 return cell
@@ -446,7 +445,7 @@ class CustomDeepSleepNet(DeepSleepNet):
             self.fw_states = fw_states		
             self.bw_states = bw_states
 
-        # Append output
+        # append output
         output_conns.append(network)
 
         ######################################################################
@@ -461,9 +460,9 @@ class CustomDeepSleepNet(DeepSleepNet):
         if self.use_dropout_sequence:
             name = "l{}_dropout".format(self.layer_idx)
             if self.is_train:
-                network = tf.nn.dropout(network, keep_prob=0.5, name=name)
+                network = tf.nn.dropout(network, 0.5, name=name)
             else:
-                network = tf.nn.dropout(network, keep_prob=1.0, name=name)
+                network = tf.nn.dropout(network, 0.99, name=name)
             self.activations.append((name, network))
         self.layer_idx += 1
 
