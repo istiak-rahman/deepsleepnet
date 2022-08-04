@@ -2,17 +2,18 @@ import tensorflow as tf
 
 from deepsleep.nn import *
 
+
 class DeepFeatureNet(object):
 
     def __init__(
-        self, 
-        batch_size, 
-        input_dims, 
-        n_classes, 
-        is_train, 
-        reuse_params, 
-        use_dropout, 
-        name="deepfeaturenet"
+            self,
+            batch_size,
+            input_dims,
+            n_classes,
+            is_train,
+            reuse_params,
+            use_dropout,
+            name="deepfeaturenet"
     ):
         self.batch_size = batch_size
         self.input_dims = input_dims
@@ -30,26 +31,27 @@ class DeepFeatureNet(object):
         # Input
         name = "x_train" if self.is_train else "x_valid"
         self.input_var = tf.compat.v1.placeholder(
-            tf.float32, 
+            tf.float32,
             shape=[self.batch_size, self.input_dims, 1, 1],
             name=name + "_inputs"
         )
         # Target
         self.target_var = tf.compat.v1.placeholder(
-            tf.int32, 
+            tf.int32,
             shape=[self.batch_size, ],
             name=name + "_targets"
         )
 
     def _conv1d_layer(self, input_var, filter_size, n_filters, stride, wd=0):
         input_shape = input_var.get_shape()
-        n_batches = input_shape[0].value
-        input_dims = input_shape[1].value
-        n_in_filters = input_shape[3].value
+        n_batches = input_shape[0]
+        input_dims = input_shape[1]
+        n_in_filters = input_shape[3]
         name = "l{}_conv".format(self.layer_idx)
         with tf.compat.v1.variable_scope(name) as scope:
-            output = conv_1d(name="conv1d", input_var=input_var, filter_shape=[filter_size, 1, n_in_filters, n_filters], stride=stride, bias=None, wd=wd)
-            
+            output = conv_1d(name="conv1d", input_var=input_var, filter_shape=[filter_size, 1, n_in_filters, n_filters],
+                             stride=stride, bias=None, wd=wd)
+
             # # MONITORING
             # self.monitor_vars.append(("{}_before_bn".format(name), output))
 
@@ -80,13 +82,14 @@ class DeepFeatureNet(object):
         self.activations.append((name, network))
         self.layer_idx += 1
 
+
         # Dropout
         if self.use_dropout:
             name = "l{}_dropout".format(self.layer_idx)
             if self.is_train:
-                network = tf.nn.dropout(network, keep_prob=0.5, name=name)
+                network = tf.nn.dropout(network, rate=0.2, name=name)
             else:
-                network = tf.nn.dropout(network, keep_prob=1.0, name=name)
+                network = tf.nn.dropout(network, rate=0.2, name=name)
             self.activations.append((name, network))
         self.layer_idx += 1
 
@@ -125,9 +128,9 @@ class DeepFeatureNet(object):
         if self.use_dropout:
             name = "l{}_dropout".format(self.layer_idx)
             if self.is_train:
-                network = tf.nn.dropout(network, keep_prob=0.5, name=name)
+                network = tf.nn.dropout(network, rate=0.2, name=name)
             else:
-                network = tf.nn.dropout(network, keep_prob=1.0, name=name)
+                network = tf.nn.dropout(network, rate=0.2, name=name)
             self.activations.append((name, network))
         self.layer_idx += 1
 
@@ -162,9 +165,9 @@ class DeepFeatureNet(object):
         if self.use_dropout:
             name = "l{}_dropout".format(self.layer_idx)
             if self.is_train:
-                network = tf.nn.dropout(network, keep_prob=0.5, name=name)
+                network = tf.nn.dropout(network, rate=0.2, name=name)
             else:
-                network = tf.nn.dropout(network, keep_prob=1.0, name=name)
+                network = tf.nn.dropout(network, rate=0.2, name=name)
             self.activations.append((name, network))
         self.layer_idx += 1
 
@@ -175,7 +178,6 @@ class DeepFeatureNet(object):
 
         # Get loss and prediction operations
         with tf.compat.v1.variable_scope(self.name) as scope:
-            
             # Reuse variables for validation
             if self.reuse_params:
                 scope.reuse_variables()
@@ -224,26 +226,26 @@ class DeepFeatureNet(object):
 class DeepSleepNet(DeepFeatureNet):
 
     def __init__(
-        self, 
-        batch_size, 
-        input_dims, 
-        n_classes, 
-        seq_length,
-        n_rnn_layers,
-        return_last,
-        is_train, 
-        reuse_params,
-        use_dropout_feature, 
-        use_dropout_sequence,
-        name="deepsleepnet"
+            self,
+            batch_size,
+            input_dims,
+            n_classes,
+            seq_length,
+            n_rnn_layers,
+            return_last,
+            is_train,
+            reuse_params,
+            use_dropout_feature,
+            use_dropout_sequence,
+            name="deepsleepnet"
     ):
         super(self.__class__, self).__init__(
-            batch_size=batch_size, 
-            input_dims=input_dims, 
-            n_classes=n_classes, 
-            is_train=is_train, 
-            reuse_params=reuse_params, 
-            use_dropout=use_dropout_feature, 
+            batch_size=batch_size,
+            input_dims=input_dims,
+            n_classes=n_classes,
+            is_train=is_train,
+            reuse_params=reuse_params,
+            use_dropout=use_dropout_feature,
             name=name
         )
 
@@ -257,14 +259,14 @@ class DeepSleepNet(DeepFeatureNet):
         # Input
         name = "x_train" if self.is_train else "x_valid"
         self.input_var = tf.compat.v1.placeholder(
-            tf.float32, 
-            shape=[self.batch_size*self.seq_length, self.input_dims, 1, 1],
+            tf.float32,
+            shape=[self.batch_size * self.seq_length, self.input_dims, 1, 1],
             name=name + "_inputs"
         )
         # Target
         self.target_var = tf.compat.v1.placeholder(
-            tf.int32, 
-            shape=[self.batch_size*self.seq_length, ],
+            tf.int32,
+            shape=[self.batch_size * self.seq_length, ],
             name=name + "_targets"
         )
 
@@ -293,36 +295,38 @@ class DeepSleepNet(DeepFeatureNet):
         # Reshape the input from (batch_size * seq_length, input_dim) to
         # (batch_size, seq_length, input_dim)
         name = "l{}_reshape_seq".format(self.layer_idx)
-        input_dim = network.get_shape()[-1].value
+        input_dim = network.get_shape()[-1]
         seq_input = tf.reshape(network,
                                shape=[-1, self.seq_length, input_dim],
                                name=name)
-        assert self.batch_size == seq_input.get_shape()[0].value
+        assert self.batch_size == seq_input.get_shape()[0]
         self.activations.append((name, seq_input))
         self.layer_idx += 1
 
         # Bidirectional LSTM network
         name = "l{}_bi_lstm".format(self.layer_idx)
-        hidden_size = 512   # will output 1024 (512 forward, 512 backward)
+        hidden_size = 512  # will output 1024 (512 forward, 512 backward)
         with tf.compat.v1.variable_scope(name) as scope:
 
             def lstm_cell():
 
-                cell = tf.compat.v1.nn.rnn_cell.LSTMCell(hidden_size,                               
-                                                use_peepholes=True,
-                                                state_is_tuple=True,
-                                                reuse=tf.compat.v1.get_variable_scope().reuse) 
+                cell = tf.compat.v1.nn.rnn_cell.LSTMCell(hidden_size,
+                                                         use_peepholes=True,
+                                                         state_is_tuple=True,
+                                                         reuse=tf.compat.v1.get_variable_scope().reuse)
                 if self.use_dropout_sequence:
-                    keep_prob = 0.5 if self.is_train else 1.0
+                    dropout = 0.5 if self.is_train else 1.0
                     cell = tf.compat.v1.nn.rnn_cell.DropoutWrapper(
                         cell,
-                        output_keep_prob=keep_prob
+                        output_keep_prob=dropout
                     )
 
                 return cell
 
-            fw_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell([lstm_cell() for _ in range(self.n_rnn_layers)], state_is_tuple = True)
-            bw_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell([lstm_cell() for _ in range(self.n_rnn_layers)], state_is_tuple = True)
+            fw_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell([lstm_cell() for _ in range(self.n_rnn_layers)],
+                                                            state_is_tuple=True)
+            bw_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell([lstm_cell() for _ in range(self.n_rnn_layers)],
+                                                            state_is_tuple=True)
 
             # Initial state of RNN
             self.fw_initial_state = fw_cell.zero_state(self.batch_size, tf.float32)
@@ -330,7 +334,7 @@ class DeepSleepNet(DeepFeatureNet):
 
             # Feedforward to MultiRNNCell
             list_rnn_inputs = tf.unstack(seq_input, axis=1)
-            #outputs, fw_state, bw_state = tf.nn.bidirectional_rnn(
+            # outputs, fw_state, bw_state = tf.nn.bidirectional_rnn(
             outputs, fw_state, bw_state = tf.compat.v1.nn.static_bidirectional_rnn(
                 cell_fw=fw_cell,
                 cell_bw=bw_cell,
@@ -342,10 +346,10 @@ class DeepSleepNet(DeepFeatureNet):
             if self.return_last:
                 network = outputs[-1]
             else:
-                network = tf.reshape(tf.concat(axis=1, values=outputs), [-1, hidden_size*2],
-                                    name=name)
+                network = tf.reshape(tf.concat(axis=1, values=outputs), [-1, hidden_size * 2],
+                                     name=name)
             self.activations.append((name, network))
-            self.layer_idx +=1
+            self.layer_idx += 1
 
             self.fw_final_state = fw_state
             self.bw_final_state = bw_state
@@ -365,9 +369,9 @@ class DeepSleepNet(DeepFeatureNet):
         if self.use_dropout_sequence:
             name = "l{}_dropout".format(self.layer_idx)
             if self.is_train:
-                network = tf.nn.dropout(network, keep_prob=0.5, name=name)
+                network = tf.nn.dropout(network, rate=0.2-keep_prob, name=name)
             else:
-                network = tf.nn.dropout(network, keep_prob=1.0, name=name)
+                network = tf.nn.dropout(network, rate=0.2-keep_prob, name=name)
             self.activations.append((name, network))
         self.layer_idx += 1
 
@@ -378,7 +382,6 @@ class DeepSleepNet(DeepFeatureNet):
 
         # Get loss and prediction operations
         with tf.compat.v1.variable_scope(self.name) as scope:
-            
             # Reuse variables for validation
             if self.reuse_params:
                 scope.reuse_variables()
@@ -398,7 +401,7 @@ class DeepSleepNet(DeepFeatureNet):
             ######### Compute loss #########
 
             # Weighted cross-entropy loss for a sequence of logits (per example)
-            loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
+            loss = tf.seq2seq.sequence_loss_by_example(
                 [self.logits],
                 [self.target_var],
                 [tf.ones([self.batch_size * self.seq_length])],
